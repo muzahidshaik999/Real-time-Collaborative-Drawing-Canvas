@@ -33,6 +33,15 @@ class Rooms {
     if (!meta) return null;
     return { id: socketId, ...meta };
   }
+
+  updateUser(roomId, socketId, fields) {
+    const room = this.rooms.get(roomId);
+    if (!room) return null;
+    const meta = room.users.get(socketId) || {};
+    const updated = { ...meta, ...(fields || {}) };
+    room.users.set(socketId, updated);
+    return { id: socketId, ...updated };
+  }
 }
 
 module.exports = new Rooms();

@@ -22,7 +22,8 @@ io.on('connection', (socket) => {
   console.log('socket connected', socket.id);
   // assign simple color
   const userColor = getRandomColor();
-  const user = { id: socket.id, color: userColor };
+  const defaultName = `User-${String(socket.id).slice(-4)}`;
+  const user = { id: socket.id, color: userColor, name: defaultName };
   rooms.addUser(ROOM, socket.id, user);
 
   // send init state
@@ -75,7 +76,8 @@ io.on('connection', (socket) => {
     // broadcast cursor to others, include user color for visibility
     const u = rooms.getUser(ROOM, socket.id);
     const color = (u && u.color) ? u.color : undefined;
-    socket.to(ROOM).emit('cursor', { id: socket.id, color, ...pos });
+    const name = (u && u.name) ? u.name : undefined;
+    socket.to(ROOM).emit('cursor', { id: socket.id, color, name, ...pos });
   });
 
   // Simple latency check: client sends timestamp, server echos back
@@ -95,6 +97,17 @@ io.on('connection', (socket) => {
     rooms.removeUser(ROOM, socket.id);
     socket.to(ROOM).emit('userLeft', { id: socket.id });
   });
+
+  // Set/Update display name
+  socket.on('setName', (nameRaw) => {
+    try {
+      const name = sanitizeName(nameRaw);
+      const updated = rooms.updateUser(ROOM, socket.id, { name });
+      if (updated) io.in(ROOM).emit('userUpdated', { id: updated.id, name: updated.name });
+    } catch (e) {
+      console.warn('setName error', e);
+    }
+  });
 });
 
 server.listen(PORT, () => {
@@ -104,4 +117,18 @@ server.listen(PORT, () => {
 function getRandomColor() {
   const colors = ['#e6194b','#3cb44b','#ffe119','#4363d8','#f58231','#911eb4','#46f0f0','#f032e6','#bcf60c','#fabebe'];
   return colors[Math.floor(Math.random()*colors.length)];
+}
+
+function sanitizeName(s) {
+  try {
+    let v = String(s || '').trim();
+    if (!v) return `User-${Math.random().toString(36).slice(2,6)}`;
+    v = v.replace(/[\n\r\t]+/g, ' ').replace(/\s{2,}/g, ' ');
+    // strip non-printable
+    v = v.replace(/[\u0000-\u001f\u007f]/g, '');
+    if (v.length > 24) v = v.slice(0,24);
+    return v;
+  } catch {
+    return `User-${Math.random().toString(36).slice(2,6)}`;
+  }
 }

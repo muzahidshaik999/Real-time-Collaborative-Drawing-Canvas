@@ -12,6 +12,7 @@
   const usersPanelEl = document.getElementById('usersPanel');
   const usersListEl = document.getElementById('usersList');
   const closeUsersPanelBtn = document.getElementById('closeUsersPanel');
+  const displayNameInput = document.getElementById('displayName');
   const colorEl = document.getElementById('color');
   const widthEl = document.getElementById('width');
   const undoBtn = document.getElementById('undo');
@@ -193,12 +194,36 @@
   WS.on('cursor', (c)=>{
     let el = document.getElementById('cursor_'+c.id);
     if (!el) {
-      el = document.createElement('div'); el.className = 'cursor'; el.id = 'cursor_'+c.id; el.style.background = c.color || '#000';
+      el = document.createElement('div'); el.className = 'cursor'; el.id = 'cursor_'+c.id;
+      // Build label container
+      const dot = document.createElement('span'); dot.className = 'cursor-dot';
+      const label = document.createElement('span'); label.className = 'cursor-label';
+      el.appendChild(dot); el.appendChild(label);
       document.getElementById('cursors').appendChild(el);
     }
+    const dotEl = el.querySelector('.cursor-dot');
+    const labelEl = el.querySelector('.cursor-label');
+    if (dotEl) dotEl.style.background = c.color || '#000';
+    if (labelEl) labelEl.textContent = (c.name ? c.name : (c.id||'')).slice(0,16);
     el.style.left = `${c.x}px`;
     el.style.top = `${c.y}px`;
   });
+  // Update user name in presence list on userUpdated
+  WS.on('userUpdated', (u)=>{
+    if (u && u.id && userMap.has(u.id)) {
+      const existing = userMap.get(u.id);
+      userMap.set(u.id, { ...existing, name: u.name });
+      renderUsers(Array.from(userMap.values()));
+    }
+  });
+  // Handle setting display name (debounced)
+  if (displayNameInput) {
+    const send = window.Utils ? Utils.debounce((v)=> WS.sendName(v), 400) : (v)=> WS.sendName(v);
+    displayNameInput.addEventListener('input', (e)=>{
+      const v = e.target.value;
+      send(v);
+    });
+  }
 
   WS.on('clear', ()=>{ if (window.DEBUG) console.log('[ws] clear'); CanvasApp.ops = []; if (CanvasApp.transients && CanvasApp.transients.clear) CanvasApp.transients.clear(); if (CanvasApp._backingCanvas && CanvasApp._backingCtx) { CanvasApp._backingCtx.clearRect(0,0,CanvasApp._backingCanvas.width, CanvasApp._backingCanvas.height); } CanvasApp.reRender(); });
 

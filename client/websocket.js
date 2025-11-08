@@ -91,10 +91,11 @@
   function sendRedo() { socket && socket.emit('redo'); }
   function sendCursor(pos) { socket && socket.emit('cursor', pos); }
   function sendClear() { socket && socket.emit('clear'); }
+  function sendName(name) { socket && socket.emit('setName', name); }
 
   // Public API
   window.WS = {
     connect, disconnect, on, off,
-    sendStroke, sendUndo, sendRedo, sendCursor, sendClear
+    sendStroke, sendUndo, sendRedo, sendCursor, sendClear, sendName
   };
 })();
