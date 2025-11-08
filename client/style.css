@@ -18,6 +18,9 @@ header.toolbar { display: flex; align-items: center; justify-content: space-betw
 input[type="color"] { width: 36px; height: 30px; border: none; background: transparent; }
 input[type="range"] { width: 140px; }
 
+#shapeLabel { display: inline-flex; align-items: center; gap: 6px; }
+#shapeLabel.hidden { display: none; }
+
 
 main { display: grid; grid-template-columns: 240px 1fr; height: calc(100vh - 110px); }
 .sidebar { border-right: 1px solid #1f2937; background: #0b1226; padding: 10px; overflow: auto; }

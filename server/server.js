@@ -60,12 +60,15 @@ io.on('connection', (socket) => {
     const op = drawingState.popLastOp();
     console.log('[undo] requested by', socket.id, 'removed id=', op && op.id);
     if (op) io.in(ROOM).emit('removeOp', { id: op.id });
+    // broadcast authoritative state snapshot for full resync
+    io.in(ROOM).emit('state', { ops: drawingState.getState().ops });
   });
 
   socket.on('redo', () => {
     const op = drawingState.redoLast();
     console.log('[redo] requested by', socket.id, 'restored id=', op && op.id);
     if (op) io.in(ROOM).emit('stroke', op);
+    io.in(ROOM).emit('state', { ops: drawingState.getState().ops });
   });
 
   socket.on('cursor', (pos) => {
@@ -78,6 +81,7 @@ io.on('connection', (socket) => {
     drawingState.clear();
     console.log('[clear] requested by', socket.id, 'cleared ops=', count);
     io.in(ROOM).emit('clear');
+    io.in(ROOM).emit('state', { ops: [] });
   });
 
   socket.on('disconnect', () => {

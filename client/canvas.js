@@ -70,6 +70,20 @@
 			ctx.restore();
 			return;
 		}
+		if (op.tool === 'triangle' && points.length >= 2) {
+			const a = points[0];
+			const b = points[points.length-1];
+			// Equilateral-ish triangle based on drag bounding box
+			const midX = (a.x + b.x) / 2;
+			ctx.beginPath();
+			ctx.moveTo(midX, a.y); // top vertex
+			ctx.lineTo(b.x, b.y);  // bottom right
+			ctx.lineTo(a.x, b.y);  // bottom left
+			ctx.closePath();
+			ctx.stroke();
+			ctx.restore();
+			return;
+		}
 		if (op.tool === 'circle' && points.length >= 2) {
 			const a = points[0];
 			const b = points[points.length-1];
@@ -79,6 +93,18 @@
 			ctx.beginPath();
 			ctx.arc(a.x, a.y, r, 0, Math.PI*2);
 			ctx.stroke();
+			ctx.restore();
+			return;
+		}
+
+		if (op.tool === 'symbol' && points.length >= 1 && op.symbol) {
+			const p = points[0];
+			const fontSize = Math.max(12, op.fontSize || 24);
+			ctx.fillStyle = op.color || '#000';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.font = `${fontSize}px Arial, Helvetica, sans-serif`;
+			ctx.fillText(op.symbol, p.x, p.y);
 			ctx.restore();
 			return;
 		}
@@ -102,8 +128,9 @@
 		const canvas = document.getElementById('canvas');
 		if (!canvas) return;
 		const ctx = canvas.getContext('2d');
+		// Always clear the main canvas first to avoid ghost pixels after undo/clear
+		ctx.clearRect(0,0,canvas.width,canvas.height);
 		if (exports._backingCanvas) ctx.drawImage(exports._backingCanvas, 0, 0);
-		else ctx.clearRect(0,0,canvas.width,canvas.height);
 		for (const [, op] of exports.transients) exports.applyOp(op, ctx);
 	};
 
@@ -111,16 +138,33 @@
 		if (!exports._backingCanvas) return;
 		const bctx = exports._backingCtx;
 		bctx.clearRect(0,0,exports._backingCanvas.width, exports._backingCanvas.height);
-		for (const op of exports.ops) exports.applyOp(op, bctx);
+		for (const op of exports.ops) {
+			if (op && op.final) exports.applyOp(op, bctx);
+		}
 	};
 
 	exports.removeOp = function(opId) {
+		// remove any transient preview with same id
+		exports.transients.delete(opId);
 		const idx = exports.ops.findIndex(o => o.id === opId);
 		if (idx !== -1) {
 			exports.ops.splice(idx, 1);
-			if (exports._backingCanvas && exports._backingCtx) exports._redrawBacking();
-			exports.reRender();
+			// ensure we have a backing canvas when there are remaining ops
+			const main = document.getElementById('canvas');
+			if (exports.ops.length > 0 && main) {
+				if (!exports._backingCanvas || !exports._backingCtx) {
+					exports._backingCanvas = document.createElement('canvas');
+					exports._backingCanvas.width = main.width;
+					exports._backingCanvas.height = main.height;
+					exports._backingCtx = exports._backingCanvas.getContext('2d');
+				}
+				exports._redrawBacking();
+			} else if (exports._backingCtx && exports._backingCanvas) {
+				// no ops left; clear backing
+				exports._backingCtx.clearRect(0,0,exports._backingCanvas.width,exports._backingCanvas.height);
+			}
 		}
+		exports.reRender();
 	};
 
 	exports.addOrReplaceOp = function(op) {

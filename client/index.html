@@ -36,11 +36,13 @@
       <div id="toolbar">
         <label>Tool:
           <select id="tool" title="Choose a tool">
-            <option value="brush">🖌️ Brush</option>
+            <option value="pencil">✏️ Pencil</option>
             <option value="eraser">🧽 Eraser</option>
             <option value="line">📏 Line</option>
             <option value="rect">⬛ Rectangle</option>
             <option value="circle">⚪ Circle</option>
+            <option value="triangle">🔺 Triangle</option>
+            <option value="symbol">🔷 Shapes</option>
           </select>
         </label>
 
@@ -50,6 +52,92 @@
 
         <label>Width:
           <input type="range" id="width" min="1" max="40" value="4" />
+        </label>
+
+        <label id="shapeLabel">Shapes:
+          <select id="shapeSymbols" title="Pick a symbol to stamp (when tool = Shapes)">
+            <optgroup label="Geometric">
+              <option value="■">■ Black square</option>
+              <option value="□">□ White square</option>
+              <option value="▪">▪ Small black square</option>
+              <option value="▫">▫ Small white square</option>
+              <option value="●">● Black circle</option>
+              <option value="○">○ White circle</option>
+              <option value="◉">◉ Bullseye circle</option>
+              <option value="◯">◯ Large circle</option>
+              <option value="◐">◐ Left half circle</option>
+              <option value="◑">◑ Right half circle</option>
+              <option value="◒">◒ Bottom half circle</option>
+              <option value="◓">◓ Top half circle</option>
+              <option value="▲">▲ Up triangle (filled)</option>
+              <option value="△">△ Up triangle (empty)</option>
+              <option value="▼">▼ Down triangle (filled)</option>
+              <option value="▽">▽ Down triangle (empty)</option>
+              <option value="▶">▶ Right triangle (filled)</option>
+              <option value="▷">▷ Right triangle (empty)</option>
+              <option value="◀">◀ Left triangle (filled)</option>
+              <option value="◁">◁ Left triangle (empty)</option>
+              <option value="◆">◆ Diamond (filled)</option>
+              <option value="◇">◇ Diamond (empty)</option>
+              <option value="⬟">⬟ Hexagon</option>
+              <option value="⬢">⬢ Black hexagon</option>
+              <option value="⬣">⬣ White hexagon</option>
+            </optgroup>
+            <optgroup label="Stars & Polygons">
+              <option value="★">★ Black star</option>
+              <option value="☆">☆ White star</option>
+              <option value="✦">✦ Four-point star</option>
+              <option value="✧">✧ Four-point star (open)</option>
+              <option value="✩">✩ Star outline</option>
+              <option value="✪">✪ Star with circle</option>
+              <option value="⛤">⛤ Pentagram (open)</option>
+              <option value="⛥">⛥ Pentagram (filled)</option>
+            </optgroup>
+            <optgroup label="Blocks & Bars">
+              <option value="▀">▀ Upper half block</option>
+              <option value="▄">▄ Lower half block</option>
+              <option value="█">█ Full block</option>
+              <option value="▌">▌ Left half block</option>
+              <option value="▐">▐ Right half block</option>
+              <option value="▓">▓ Dark shade</option>
+              <option value="▒">▒ Medium shade</option>
+              <option value="░">░ Light shade</option>
+            </optgroup>
+            <optgroup label="Arrows">
+              <option value="➔">➔ Right arrow</option>
+              <option value="➜">➜ Right arrow (thick)</option>
+              <option value="➙">➙ Right arrow (medium)</option>
+              <option value="➤">➤ Black right arrowhead</option>
+              <option value="➣">➣ Right arrow small</option>
+              <option value="➲">➲ Curved right arrow</option>
+              <option value="↩">↩ Left arrow hook</option>
+              <option value="↪">↪ Right arrow hook</option>
+              <option value="↻">↻ Clockwise arrow</option>
+              <option value="↺">↺ Counterclockwise arrow</option>
+              <option value="⬆">⬆ Up arrow</option>
+              <option value="⬇">⬇ Down arrow</option>
+              <option value="⬅">⬅ Left arrow</option>
+              <option value="➡">➡ Right arrow</option>
+            </optgroup>
+            <optgroup label="Misc">
+              <option value="⌂">⌂ House</option>
+              <option value="⌘">⌘ Command</option>
+              <option value="⌛">⌛ Hourglass</option>
+              <option value="⏳">⏳ Hourglass not done</option>
+              <option value="⚙">⚙ Gear</option>
+              <option value="⚫">⚫ Large black circle</option>
+              <option value="⚪">⚪ Large white circle</option>
+              <option value="⬤">⬤ Medium black circle</option>
+              <option value="⬛">⬛ Large black square</option>
+              <option value="⬜">⬜ Large white square</option>
+              <option value="🔺">🔺 Red triangle up</option>
+              <option value="🔻">🔻 Red triangle down</option>
+              <option value="🔸">🔸 Small orange diamond</option>
+              <option value="🔹">🔹 Small blue diamond</option>
+              <option value="🔷">🔷 Large blue diamond</option>
+              <option value="🔶">🔶 Large orange diamond</option>
+            </optgroup>
+          </select>
         </label>
 
   <button id="undo" title="Undo last">↩️ Undo</button>
