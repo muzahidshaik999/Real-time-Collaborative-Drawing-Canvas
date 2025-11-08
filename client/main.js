@@ -203,8 +203,10 @@
     }
     const dotEl = el.querySelector('.cursor-dot');
     const labelEl = el.querySelector('.cursor-label');
-    if (dotEl) dotEl.style.background = c.color || '#000';
-    if (labelEl) labelEl.textContent = (c.name ? c.name : (c.id||'')).slice(0,16);
+    if (labelEl) {
+      labelEl.textContent = (c.name ? c.name : (c.id||'')).slice(0,16);
+      labelEl.style.border = `1px solid ${c.color || '#000'}`;
+    }
     el.style.left = `${c.x}px`;
     el.style.top = `${c.y}px`;
   });
