@@ -27,7 +27,7 @@ npm start
 
 Open two (or more) browser tabs at:
 
-http://localhost:3000
+https://real-time-collaborative-drawing-canvas-4zsk.onrender.com
 
 Draw simultaneously to observe real-time sync, cursors, and undo/redo behavior.
 
