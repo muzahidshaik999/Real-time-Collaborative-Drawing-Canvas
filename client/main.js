@@ -8,6 +8,10 @@
   const shapePaletteEl = document.getElementById('shapePalette');
   const shapeSymbolsGridEl = document.getElementById('shapeSymbols');
   const closeShapePaletteBtn = document.getElementById('closeShapePalette');
+  const usersBtn = document.getElementById('usersBtn');
+  const usersPanelEl = document.getElementById('usersPanel');
+  const usersListEl = document.getElementById('usersList');
+  const closeUsersPanelBtn = document.getElementById('closeUsersPanel');
   const colorEl = document.getElementById('color');
   const widthEl = document.getElementById('width');
   const undoBtn = document.getElementById('undo');
@@ -147,7 +151,9 @@
     }
     CanvasApp.reRender();
     // users
-    userListEl.textContent = (data.users || []).length;
+    const users = data.users || [];
+    updateUserCountDisplay(users.length);
+    renderUsers(users);
     if (window.DEBUG) console.log('init received', data);
   });
 
@@ -156,15 +162,32 @@
   WS.on('removeOp', ({id})=>{ if (window.DEBUG) console.log('[ws] removeOp', id); CanvasApp.removeOp(id); });
 
   // Update simple user count on join/leave
-  function updateUserCount(delta){
-    const span = document.getElementById('userList');
-    if (!span) return;
-    const n = parseInt(span.textContent || '0', 10) || 0;
-    const next = Math.max(0, n + delta);
-    span.textContent = String(next);
+  function updateUserCountDisplay(count){
+    const span = document.getElementById('userCount');
+    if (span) span.textContent = String(Math.max(0, count));
   }
-  WS.on('userJoined', (u)=>{ updateUserCount(1); });
-  WS.on('userLeft', (u)=>{ updateUserCount(-1); });
+  function renderUsers(list){
+    if (!usersListEl) return;
+    usersListEl.innerHTML = '';
+    for (const u of list){
+      const li = document.createElement('li');
+      const dot = document.createElement('span'); dot.className = 'user-dot'; dot.style.background = u.color || '#000';
+      const name = document.createElement('span'); name.textContent = u.id.slice(0,6);
+      li.appendChild(dot); li.appendChild(name); usersListEl.appendChild(li);
+    }
+  }
+  // Maintain internal user map
+  const userMap = new Map();
+  WS.on('userJoined', (u)=>{ userMap.set(u.id, u); updateUserCountDisplay(userMap.size); renderUsers(Array.from(userMap.values())); });
+  WS.on('userLeft', (u)=>{ userMap.delete(u.id); updateUserCountDisplay(userMap.size); renderUsers(Array.from(userMap.values())); });
+  // Users panel toggle
+  function toggleUsersPanel(show){
+    if (!usersPanelEl) return;
+    const shouldShow = typeof show === 'boolean' ? show : usersPanelEl.classList.contains('hidden');
+    usersPanelEl.classList.toggle('hidden', !shouldShow);
+  }
+  if (usersBtn) usersBtn.addEventListener('click', ()=> toggleUsersPanel());
+  if (closeUsersPanelBtn) closeUsersPanelBtn.addEventListener('click', ()=> toggleUsersPanel(false));
 
   WS.on('cursor', (c)=>{
     let el = document.getElementById('cursor_'+c.id);

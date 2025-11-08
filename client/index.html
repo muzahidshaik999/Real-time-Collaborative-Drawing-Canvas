@@ -42,6 +42,7 @@
           <button type="button" data-tool="circle" class="tool-btn" title="Circle">⚪</button>
           <button type="button" data-tool="triangle" class="tool-btn" title="Triangle">🔺</button>
           <button type="button" data-tool="symbol" class="tool-btn" title="Shapes palette" id="shapePaletteBtn">🔷</button>
+          <button type="button" class="tool-btn" id="usersBtn" title="Online users">👥</button>
         </div>
 
         <label>Color:
@@ -139,11 +140,18 @@
           <button type="button" id="closeShapePalette" class="close-shapes" title="Close">×</button>
         </div>
 
+        <!-- Users panel (popover) -->
+        <div id="usersPanel" class="panel hidden" aria-label="Online users">
+          <div style="font-weight:600; margin-bottom:6px;">Online users</div>
+          <ul id="usersList" class="users-list"></ul>
+          <button type="button" id="closeUsersPanel" class="close-shapes" title="Close">×</button>
+        </div>
+
   <button id="undo" title="Undo last">↩️ Undo</button>
   <button id="redo" title="Redo">↪️ Redo</button>
   <button id="clear" title="Clear canvas">🗑️ Clear</button>
 
-        <div id="users">Users: <span id="userList">-</span></div>
+  <div id="users">Users: <span id="userCount">-</span></div>
 
         <!-- status/latency on the right -->
         <div id="statusBar">
