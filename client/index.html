@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Collaborative Canvas</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* small quality-of-life defaults if not already in style.css */
+      html, body { height: 100%; margin: 0; }
+      #app { display: flex; flex-direction: column; height: 100%; }
+      #toolbar {
+        display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+        padding: 8px 10px; border-bottom: 1px solid #1f2937; background: #0f172a; color: #e2e8f0;
+      }
+      #statusBar {
+        margin-left: auto; display: flex; gap: 10px; align-items: center; font-size: 12px; opacity: 0.85;
+      }
+      #canvasWrap { position: relative; flex: 1; background: #0b1020; }
+      #canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+      #cursors { position: absolute; inset: 0; pointer-events: none; }
+      #footer {
+        padding: 6px 10px; background: #0f172a; color: #94a3b8; border-top: 1px solid #1f2937;
+        display: flex; justify-content: space-between; align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="padding:12px;background:#fee2e2;color:#7f1d1d;text-align:center;">
+        This app requires JavaScript to run.
+      </div>
+    </noscript>
+
+    <div id="app">
+      <div id="toolbar">
+        <label>Tool:
+          <select id="tool" title="Choose a tool">
+            <option value="brush">🖌️ Brush</option>
+            <option value="eraser">🧽 Eraser</option>
+            <option value="line">📏 Line</option>
+            <option value="rect">⬛ Rectangle</option>
+            <option value="circle">⚪ Circle</option>
+          </select>
+        </label>
+
+        <label>Color:
+          <input type="color" id="color" value="#000000" />
+        </label>
+
+        <label>Width:
+          <input type="range" id="width" min="1" max="40" value="4" />
+        </label>
+
+  <button id="undo" title="Undo last">↩️ Undo</button>
+  <button id="redo" title="Redo">↪️ Redo</button>
+  <button id="clear" title="Clear canvas">🗑️ Clear</button>
+
+        <div id="users">Users: <span id="userList">-</span></div>
+
+        <!-- status/latency on the right -->
+        <div id="statusBar">
+          <span id="status">Disconnected</span>
+          <span id="latency">-- ms</span>
+        </div>
+      </div>
+
+      <div id="canvasWrap">
+        <canvas id="canvas"></canvas>
+        <!-- if you prefer a canvas overlay for cursors, keep the same id and swap to a canvas element later -->
+        <div id="cursors"></div>
+      </div>
+
+      <footer id="footer">
+        <span>Open two browser windows to test collaboration. Undo is global (undo last operation).</span>
+        <span>
+          <a href="https://socket.io" target="_blank" rel="noreferrer" style="color:#22d3ee;text-decoration:none;">Socket.io</a>
+        </span>
+      </footer>
+    </div>
+
+    <!-- Socket.io client must load first -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Load helpers before code that uses them -->
+    <script src="utils.js"></script>
+
+    <!-- Your Socket wrapper (updated to allow websocket/polling + status events) -->
+    <script src="websocket.js"></script>
+
+    <!-- Canvas + app code -->
+    <script src="canvas.js"></script>
+    <script src="main.js"></script>
+
+    <!-- Optional: lightweight status wiring if your main.js doesn’t set it -->
+    <script>
+      // If main.js already sets status/latency, this is harmless.
+      if (window.WS && typeof window.WS.on === 'function') {
+        WS.on('status', txt => {
+          const el = document.getElementById('status');
+          if (el) el.textContent = txt;
+        });
+        // If you later add ping/pong in your server, you can forward 'latency' here.
+        WS.on('latency', ms => {
+          const el = document.getElementById('latency');
+          if (el) el.textContent = ms + ' ms';
+        });
+      }
+    </script>
+  </body>
+</html>
