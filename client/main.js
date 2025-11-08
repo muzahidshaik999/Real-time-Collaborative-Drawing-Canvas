@@ -129,6 +129,7 @@
   // Wire websocket events
   WS.on('connect', (id)=>{ myId = id; });
   WS.on('status', (txt)=>{ if (statusEl) statusEl.textContent = txt; });
+  WS.on('latency', (ms)=>{ const el = document.getElementById('latency'); if (el) el.textContent = `${ms} ms`; });
 
   WS.on('init', (data)=>{
     myId = data.id;

@@ -66,8 +66,16 @@
     socket.on('clear', () => emitLocal('clear'));
 
     // Optional latency ping if your server supports it:
-    // setInterval(() => socket.emit('ping'), 1500);
-    // socket.on('pong', () => emitLocal('latency', ...));
+    setInterval(() => {
+      if (socket && socket.connected) {
+        const ts = Date.now();
+        socket.emit('pingCheck', ts);
+      }
+    }, 5000);
+    socket.on('pongCheck', (tsSent) => {
+      const ms = Date.now() - tsSent;
+      emitLocal('latency', ms);
+    });
   }
 
   function disconnect() {

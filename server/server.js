@@ -78,6 +78,11 @@ io.on('connection', (socket) => {
     socket.to(ROOM).emit('cursor', { id: socket.id, color, ...pos });
   });
 
+  // Simple latency check: client sends timestamp, server echos back
+  socket.on('pingCheck', (ts) => {
+    socket.emit('pongCheck', ts);
+  });
+
   socket.on('clear', () => {
     const count = drawingState.ops.length;
     drawingState.clear();
