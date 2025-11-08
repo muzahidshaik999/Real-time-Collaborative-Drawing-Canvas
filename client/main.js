@@ -2,8 +2,12 @@
 (function(){
   const canvasEl = document.getElementById('canvas');
   const cursorsEl = document.getElementById('cursors');
-  const toolEl = document.getElementById('tool');
-  const shapeSymbolsEl = document.getElementById('shapeSymbols');
+  // New tool UI elements
+  const toolGroupEl = document.getElementById('toolGroup');
+  const shapePaletteBtn = document.getElementById('shapePaletteBtn');
+  const shapePaletteEl = document.getElementById('shapePalette');
+  const shapeSymbolsGridEl = document.getElementById('shapeSymbols');
+  const closeShapePaletteBtn = document.getElementById('closeShapePalette');
   const colorEl = document.getElementById('color');
   const widthEl = document.getElementById('width');
   const undoBtn = document.getElementById('undo');
@@ -23,6 +27,9 @@
   let currentPoints = [];
   let myId = null;
   let currentOpId = null;
+  // current tool + symbol state (replaces old <select id="tool"> and shapes <select>)
+  let currentTool = 'pencil';
+  let currentSymbol = '■';
 
   const makeId = () => (window.Utils && Utils.uid ? Utils.uid('op') : `op_${Date.now()}_${Math.random().toString(36).slice(2,6)}`);
 
@@ -37,9 +44,9 @@
   canvas.addEventListener('pointerdown', (e)=>{
     const start = getPos(e);
     // If symbol tool, stamp immediately on click
-    if (toolEl.value === 'symbol') {
+    if (getTool() === 'symbol') {
       const op = buildOp([start], true);
-      op.symbol = shapeSymbolsEl.value;
+      op.symbol = currentSymbol;
       op.fontSize = Math.max(12, Number(widthEl.value) * 6);
       CanvasApp.addOrReplaceOp(op);
       WS.sendStroke(op);
@@ -50,20 +57,20 @@
     drawing = true;
     currentOpId = makeId();
     currentPoints = [start];
-    if (window.DEBUG) console.log('pointerdown', currentOpId, start, 'tool=', toolEl.value);
+    if (window.DEBUG) console.log('pointerdown', currentOpId, start, 'tool=', getTool());
   });
   canvas.addEventListener('pointermove', (e)=>{
     const pos = getPos(e);
     if (drawing) {
       // For shape tools we keep just start + current point for live preview
-      if (toolEl.value === 'line' || toolEl.value === 'rect' || toolEl.value === 'circle' || toolEl.value === 'triangle') {
+      if (getTool() === 'line' || getTool() === 'rect' || getTool() === 'circle' || getTool() === 'triangle') {
         if (currentPoints.length === 1) currentPoints.push(pos); else currentPoints[currentPoints.length-1] = pos;
         const previewOp = buildOp(currentPoints.slice(), false);
         CanvasApp.addOrReplaceOp(previewOp);
-      } else if (toolEl.value === 'symbol') {
+      } else if (getTool() === 'symbol') {
         // For symbols, show a transient preview at cursor
         const preview = buildOp([pos], false);
-        preview.symbol = shapeSymbolsEl.value;
+        preview.symbol = currentSymbol;
         preview.fontSize = Math.max(12, Number(widthEl.value) * 6);
         CanvasApp.addOrReplaceOp(preview);
       } else {
@@ -90,9 +97,9 @@
     if (!drawing) return;
     drawing = false;
     const pos = getPos(e);
-    if (toolEl.value === 'line' || toolEl.value === 'rect' || toolEl.value === 'circle' || toolEl.value === 'triangle') {
+    if (getTool() === 'line' || getTool() === 'rect' || getTool() === 'circle' || getTool() === 'triangle') {
       if (currentPoints.length === 1) currentPoints.push(pos); else currentPoints[currentPoints.length-1] = pos;
-    } else if (toolEl.value === 'symbol') {
+    } else if (getTool() === 'symbol') {
       // place a symbol at click position (use pointerup to commit)
       currentPoints = [pos];
     } else {
@@ -100,19 +107,19 @@
     }
     const finalPoints = (window.Utils && Utils.simplifyByDistance) ? Utils.simplifyByDistance(currentPoints, 2) : currentPoints.slice();
     const op = buildOp(finalPoints, true);
-    if (toolEl.value === 'symbol') {
-      op.symbol = shapeSymbolsEl.value;
+    if (getTool() === 'symbol') {
+      op.symbol = currentSymbol;
       op.fontSize = Math.max(12, Number(widthEl.value) * 6);
     }
     CanvasApp.addOrReplaceOp(op);
     WS.sendStroke(op);
     currentPoints = [];
-    if (window.DEBUG) console.log('final stroke sent', op.id, op.points.length, 'tool=', toolEl.value);
+    if (window.DEBUG) console.log('final stroke sent', op.id, op.points.length, 'tool=', getTool());
     currentOpId = null;
   });
 
   function buildOp(points, finalize=false){
-    return { id: currentOpId || makeId(), userId: myId, color: colorEl.value, width: Number(widthEl.value), tool: toolEl.value, points, final: !!finalize };
+    return { id: currentOpId || makeId(), userId: myId, color: colorEl.value, width: Number(widthEl.value), tool: getTool(), points, final: !!finalize };
   }
 
   // Wire websocket events
@@ -193,7 +200,7 @@
 
   // --- Dynamic cursor to match tool ---
   function setToolCursor() {
-    const tool = toolEl.value;
+    const tool = getTool();
     const size = Math.max(6, Number(widthEl.value));
     const color = colorEl.value || '#000000';
     // Use a classic crosshair '+' for shapes like Word; generate pencil/eraser icons otherwise
@@ -203,9 +210,7 @@
       const url = makeCursorForTool(tool, size, color);
       canvas.style.cursor = url ? `url(${url}) ${Math.ceil(size/2)} ${Math.ceil(size/2)}, crosshair` : 'crosshair';
     }
-    // Toggle shapes dropdown visibility
-    const shapeLabel = document.getElementById('shapeLabel');
-    if (shapeLabel) shapeLabel.classList.toggle('hidden', tool !== 'symbol');
+    // Show palette if symbol tool is selected and palette isn't open (open on button click only)
   }
 
   function makeCursorForTool(tool, size, color) {
@@ -247,19 +252,84 @@
     }
   }
 
-  // Update cursor when tool/size/color changes
-  toolEl.addEventListener('change', setToolCursor);
+  // Update cursor when size/color changes
   widthEl.addEventListener('input', setToolCursor);
   colorEl.addEventListener('input', setToolCursor);
-  // If a symbol is chosen while another tool is active, switch to 'symbol' tool automatically
-  if (shapeSymbolsEl) {
-    shapeSymbolsEl.addEventListener('change', ()=>{
-      if (toolEl.value !== 'symbol') {
-        toolEl.value = 'symbol';
-        setToolCursor();
+  
+  // --- Tool group wiring ---
+  function getTool(){ return currentTool; }
+  function setTool(tool){
+    currentTool = tool;
+    if (toolGroupEl) {
+      for (const btn of toolGroupEl.querySelectorAll('.tool-btn')) {
+        btn.classList.toggle('active', btn.getAttribute('data-tool') === tool);
+      }
+    }
+    setToolCursor();
+  }
+  if (toolGroupEl) {
+    toolGroupEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.tool-btn');
+      if (!btn) return;
+      const tool = btn.getAttribute('data-tool');
+      if (tool === 'symbol') {
+        // Open/Toggle palette; don't immediately change tool until a symbol is picked
+        toggleShapePalette(true);
+      } else {
+        setTool(tool);
       }
     });
   }
+
+  // --- Shapes palette wiring ---
+  function toggleShapePalette(show) {
+    if (!shapePaletteEl) return;
+    const shouldShow = typeof show === 'boolean' ? show : shapePaletteEl.classList.contains('hidden');
+    shapePaletteEl.classList.toggle('hidden', !shouldShow);
+  }
+  if (shapePaletteBtn) shapePaletteBtn.addEventListener('click', ()=> toggleShapePalette());
+  if (closeShapePaletteBtn) closeShapePaletteBtn.addEventListener('click', ()=> toggleShapePalette(false));
+
+  // Build shape grid buttons from any <option> children that might be present (migration-safe)
+  (function buildShapeGrid(){
+    if (!shapeSymbolsGridEl) return;
+    // Collect options from any nested <option> tags
+    const opts = Array.from(shapeSymbolsGridEl.querySelectorAll('option'));
+    let hadOptions = false;
+    if (opts.length) {
+      hadOptions = true;
+      // Clear grid content before injecting buttons
+      shapeSymbolsGridEl.innerHTML = '';
+      for (const opt of opts) {
+        const symbol = opt.getAttribute('value') || opt.textContent.trim();
+        const label = opt.textContent.trim();
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'shape-item'; b.textContent = symbol; b.title = label;
+        b.dataset.symbol = symbol;
+        shapeSymbolsGridEl.appendChild(b);
+      }
+    }
+    // If no options, provide a small default set
+    if (!hadOptions && !shapeSymbolsGridEl.querySelector('.shape-item')) {
+      const defaults = ['■','□','●','○','★','☆','▲','△','◆','◇','⬤','⬛','⬜','◯','◉'];
+      for (const s of defaults) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'shape-item'; b.textContent = s; b.title = s;
+        b.dataset.symbol = s; shapeSymbolsGridEl.appendChild(b);
+      }
+    }
+    // Click to select symbol and switch tool
+    shapeSymbolsGridEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.shape-item');
+      if (!btn) return;
+      currentSymbol = btn.dataset.symbol || btn.textContent.trim();
+      setTool('symbol');
+      toggleShapePalette(false);
+    });
+  })();
+
   // Initialize once
   setToolCursor();
+  // Ensure initial active tool button state
+  setTool('pencil');
 })();

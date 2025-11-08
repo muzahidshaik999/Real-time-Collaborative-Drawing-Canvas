@@ -34,17 +34,15 @@
 
     <div id="app">
       <div id="toolbar">
-        <label>Tool:
-          <select id="tool" title="Choose a tool">
-            <option value="pencil">✏️ Pencil</option>
-            <option value="eraser">🧽 Eraser</option>
-            <option value="line">📏 Line</option>
-            <option value="rect">⬛ Rectangle</option>
-            <option value="circle">⚪ Circle</option>
-            <option value="triangle">🔺 Triangle</option>
-            <option value="symbol">🔷 Shapes</option>
-          </select>
-        </label>
+        <div class="tool-group" id="toolGroup" role="group" aria-label="Drawing tools">
+          <button type="button" data-tool="pencil" class="tool-btn active" title="Pencil (Freehand)">✏️</button>
+          <button type="button" data-tool="eraser" class="tool-btn" title="Eraser">🧽</button>
+          <button type="button" data-tool="line" class="tool-btn" title="Line">📏</button>
+          <button type="button" data-tool="rect" class="tool-btn" title="Rectangle">⬛</button>
+          <button type="button" data-tool="circle" class="tool-btn" title="Circle">⚪</button>
+          <button type="button" data-tool="triangle" class="tool-btn" title="Triangle">🔺</button>
+          <button type="button" data-tool="symbol" class="tool-btn" title="Shapes palette" id="shapePaletteBtn">🔷</button>
+        </div>
 
         <label>Color:
           <input type="color" id="color" value="#000000" />
@@ -54,8 +52,8 @@
           <input type="range" id="width" min="1" max="40" value="4" />
         </label>
 
-        <label id="shapeLabel">Shapes:
-          <select id="shapeSymbols" title="Pick a symbol to stamp (when tool = Shapes)">
+        <div id="shapePalette" class="shape-palette hidden" aria-label="Shapes palette">
+          <div class="shape-grid" id="shapeSymbols" title="Pick a symbol to stamp">
             <optgroup label="Geometric">
               <option value="■">■ Black square</option>
               <option value="□">□ White square</option>
@@ -137,8 +135,9 @@
               <option value="🔷">🔷 Large blue diamond</option>
               <option value="🔶">🔶 Large orange diamond</option>
             </optgroup>
-          </select>
-        </label>
+          </div>
+          <button type="button" id="closeShapePalette" class="close-shapes" title="Close">×</button>
+        </div>
 
   <button id="undo" title="Undo last">↩️ Undo</button>
   <button id="redo" title="Redo">↪️ Redo</button>
