@@ -1,17 +1,23 @@
-# Collaborative Canvas
+# Real-Time Collaborative Drawing Canvas
 
-This is a small demo of a real-time collaborative drawing canvas built with vanilla JavaScript on the frontend and Node.js + Socket.io on the backend.
+Vanilla JS + HTML5 Canvas + Node.js (Express + Socket.io). Multiple users draw together in real time with live stroke streaming, shared undo/redo, shapes, and symbol stamping.
 
-Features included:
-- Brush and eraser
-- Color and stroke width
-- Real-time drawing (live stroke streaming)
-- User cursors
-- Global undo/redo (server-driven)
-- Simple user list
+## ✨ Features (Assignment Mapping)
 
-Quick start
-1. Install dependencies
+| Requirement | Implemented | Notes |
+|-------------|-------------|-------|
+| Brush / Eraser | Yes | Freehand strokes with smoothing + destination-out eraser |
+| Colors & Width | Yes | Color input + range slider for stroke width |
+| Real-time Sync (live, not post-stroke) | Yes | Partial stroke packets every few points (final flag on commit) |
+| User Cursors | Yes | Throttled broadcast (50ms) per pointer move |
+| Global Undo / Redo | Yes | Server authoritative last-op undo/redo with snapshot resync |
+| Conflict Resolution | Basic | Layered compositing + eraser pixel subtraction; last-op global undo |
+| User List / Presence | Basic | Shows count; structure present for per-user metadata |
+| Shapes (bonus) | Yes | Line, Rectangle, Circle, Triangle tools |
+| Symbol / Shape Stamping (bonus) | Yes | Popover grid of many Unicode symbols |
+| Light Theme UI Polish | Yes | Custom toolbar, button group, popover palette |
+
+## 🚀 Quick Start
 
 ```powershell
 cd "C:\Users\mujah\OneDrive\Desktop\Real-time Collaborative Drawing Canvas\collaborative-canvas"
@@ -19,51 +25,94 @@ npm install
 npm start
 ```
 
-2. Open http://localhost:3000 in two browser windows to test collaboration.
+Open two (or more) browser tabs at:
 
-Git & GitHub
+http://localhost:3000
 
-Initialize (first time):
+Draw simultaneously to observe real-time sync, cursors, and undo/redo behavior.
 
-```powershell
-cd "C:\Users\mujah\OneDrive\Desktop\Real-time Collaborative Drawing Canvas\collaborative-canvas"
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/muzahidshaik999/Real-time-Collaborative-Drawing-Canvas.git
-git push -u origin main
+## 🕹 Usage Guide
+
+Toolbar buttons:
+- ✏️ Pencil: Freehand drawing
+- 🧽 Eraser: Removes pixels (non-destructive to history order other than adding eraser ops)
+- 📏 Line / ⬛ Rectangle / ⚪ Circle / 🔺 Triangle: Click-drag-release for shape previews
+- 🔷 Shapes: Opens symbol palette; click a symbol to stamp it at next click
+
+Other controls:
+- Color picker: Stroke/shape color
+- Width slider: Stroke/shape thickness (also scales symbol font size)
+- Undo / Redo: Global history operations (last committed op)
+- Clear: Wipes all committed ops
+
+## 🔌 WebSocket Message Reference
+
+See `ARCHITECTURE.md` for full protocol. Core types: init, stroke, removeOp, state, undo, redo, cursor, clear.
+
+## 🧠 Undo/Redo Model
+
+Only final strokes are persisted server-side. Partial (in-progress) strokes are transient and ignored for history—this keeps undo deterministic and compact. After undo/redo the server also emits a `state` snapshot for guaranteed convergence.
+
+## ⚙ Performance Choices
+- Backing canvas caches all finalized ops for O(1) composite.
+- Transients re-render atop backing only while active.
+- Point simplification (distance-based) reduces payload size.
+- Partial emission every ~5 points balances smoothness vs bandwidth.
+- Cursor updates throttled to 20 FPS.
+
+## 🧪 Testing Multi-User Locally
+1. Run the server.
+2. Open multiple tabs (or devices on LAN using your machine IP + :3000).
+3. Draw concurrently: verify minimal latency and correct layering.
+4. Perform undo/redo from different tabs—result should be consistent everywhere.
+
+## 🧩 Conflict Resolution Strategy
+Simple layering: later ops draw over earlier ones; eraser uses compositing (destination-out). Global undo always removes the latest finalized op (any author). More advanced ownership or CRDT merging intentionally omitted for clarity.
+
+## 📁 Project Structure
+```
+collaborative-canvas/
+	client/
+		index.html
+		style.css
+		canvas.js
+		websocket.js
+		main.js
+		utils.js
+	server/
+		server.js
+		rooms.js
+		drawing-state.js
+	render.yaml
+	package.json
+	README.md
+	ARCHITECTURE.md
 ```
 
-Subsequent updates:
+## 🌐 Deployment (Render Example)
+Included `render.yaml`. Typical settings:
+- Build: `npm install`
+- Start: `npm start`
 
-```powershell
-git add .
-git commit -m "Update features (shapes, undo fixes)"
-git push
-```
+## 🧱 Known Limitations
+- No authentication; identity = socket id.
+- Global undo removes the most recent finalized op only.
+- No persistence (reload resets state) unless process memory retained.
+- User list UI minimal (only count displayed in current toolbar version).
+- Not yet optimized for mobile touch gesture edge-cases (basic pointer events work).
 
-Deploy on Render
+## 🧭 Potential Enhancements
+- Per-user undo stacks or tagged selective undo.
+- Multi-room support (extend `rooms.js`).
+- Persistence layer (Redis/Postgres) for session recovery.
+- Binary protocol (e.g., protobuf) for more compact ops.
+- Pressure-based stroke width on stylus devices.
 
-1. Push the repository to GitHub (see above).
-2. Log into https://render.com and click New + Web Service.
-3. Select your GitHub repo.
-4. Settings:
-	- Environment: Node
-	- Build Command: `npm install`
-	- Start Command: `npm start`
-5. (Optional) Add `render.yaml` for Infrastructure as Code. This repo already includes `render.yaml` so Render can auto-detect settings.
-6. Click Create Web Service. After build succeeds you’ll get a public URL.
+## ⏱ Time Spent
+- Initial core (real-time drawing, basic undo/redo): ~2 hours
+- Reliability & smoothing improvements: ~1 hour
+- Shapes, symbols palette & UI polish: ~1.5 hours
+- Documentation & architectural detailing: ~45 minutes
 
-Troubleshooting Render
- - If the service shows “listening on 3000” in logs but 502 on browser, ensure the server starts without binding to 127.0.0.1 only (current code uses default, fine).
- - Confirm no dev-only dependencies block production (nodemon only in devDependencies, so fine).
- - Redeploy from the dashboard if a build got cached incorrectly.
-
-Notes and limitations
-- Global undo simply removes the last operation in the global history (not per-user undo). This is a deliberate, simple strategy for the assignment. ARCHITECTURE.md describes alternative strategies.
-- Stroke events are sent in segments (partial bursts) to provide live updates while typing; the server stores each op as it's received.
-- No authentication; user identity is socket id.
-- This is a minimal example intended for evaluation; production systems should add authorization, per-room permissions, persistence, and better conflict resolution.
-
-Time spent: ~2 hours for core implementation and documentation (demo-level readiness) + incremental enhancements for shapes and deployment guidance.
+## 📄 License
+MIT (optional placeholder — adjust as needed).

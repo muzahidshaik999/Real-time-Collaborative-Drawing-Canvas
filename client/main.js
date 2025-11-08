@@ -155,8 +155,16 @@
 
   WS.on('removeOp', ({id})=>{ if (window.DEBUG) console.log('[ws] removeOp', id); CanvasApp.removeOp(id); });
 
-  WS.on('userJoined', (u)=>{ /* update user list */ });
-  WS.on('userLeft', (u)=>{ /* update user list */ });
+  // Update simple user count on join/leave
+  function updateUserCount(delta){
+    const span = document.getElementById('userList');
+    if (!span) return;
+    const n = parseInt(span.textContent || '0', 10) || 0;
+    const next = Math.max(0, n + delta);
+    span.textContent = String(next);
+  }
+  WS.on('userJoined', (u)=>{ updateUserCount(1); });
+  WS.on('userLeft', (u)=>{ updateUserCount(-1); });
 
   WS.on('cursor', (c)=>{
     let el = document.getElementById('cursor_'+c.id);

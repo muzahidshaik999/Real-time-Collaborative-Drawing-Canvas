@@ -72,8 +72,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('cursor', (pos) => {
-    // broadcast cursor to others
-    socket.to(ROOM).emit('cursor', { id: socket.id, ...pos });
+    // broadcast cursor to others, include user color for visibility
+    const u = rooms.getUser(ROOM, socket.id);
+    const color = (u && u.color) ? u.color : undefined;
+    socket.to(ROOM).emit('cursor', { id: socket.id, color, ...pos });
   });
 
   socket.on('clear', () => {

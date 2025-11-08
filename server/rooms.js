@@ -25,6 +25,14 @@ class Rooms {
     if (!room) return [];
     return Array.from(room.users.entries()).map(([id, meta]) => ({ id, ...meta }));
   }
+
+  getUser(roomId, socketId) {
+    const room = this.rooms.get(roomId);
+    if (!room) return null;
+    const meta = room.users.get(socketId);
+    if (!meta) return null;
+    return { id: socketId, ...meta };
+  }
 }
 
 module.exports = new Rooms();
